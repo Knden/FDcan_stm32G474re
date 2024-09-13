@@ -20,6 +20,7 @@ void Serial_Monitor_Init(void);
 
 /* Functions for FDCAN */
 void FDCAN1_init();
+void FDCAN2_init();
 
 /* Private defines -----------------------------------------------------------*/
 #define B1_Pin GPIO_PIN_13
