@@ -7,7 +7,7 @@
 #include <zephyr/kernel.h>
 #include <zephyr/console/console.h>
 
-#define CONFIG_LOOPBACK_MODE 1
+#define CONFIG_LOOPBACK_MODE 0
 
 #define RX_THREAD_STACK_SIZE 512
 #define RX_THREAD_PRIORITY 2
@@ -22,7 +22,8 @@
 K_THREAD_STACK_DEFINE(rx_thread_stack, RX_THREAD_STACK_SIZE);
 K_THREAD_STACK_DEFINE(poll_state_stack, RX_THREAD_STACK_SIZE);
 
-const struct device *const can_dev = DEVICE_DT_GET(DT_CHOSEN(zephyr_canbus));
+const struct device *const fdcan1 = DEVICE_DT_GET(DT_NODELABEL(fdcan1));
+const struct device *const fdcan2 = DEVICE_DT_GET(DT_NODELABEL(fdcan2));
 struct gpio_dt_spec led = GPIO_DT_SPEC_GET_OR(DT_ALIAS(led0), gpios, {0});
 
 /*Will store information about the thread */
@@ -79,7 +80,7 @@ void rx_thread(void* arg1, void* arg2, void* arg3)
     struct can_frame frame;
     int filter_id;
 
-    filter_id = can_add_rx_filter_msgq(can_dev, &counter_msgq, &filter);
+    filter_id = can_add_rx_filter_msgq(fdcan2, &counter_msgq, &filter);
     printk("Counter filter id: %d\n", filter_id);
 
     while(1)
@@ -161,7 +162,7 @@ void poll_state_thread(void* unused1, void *unused2, void *unused3)
 
     while(1)
     {
-        err = can_get_state(can_dev, &state, &err_cnt);
+        err = can_get_state(fdcan1, &state, &err_cnt);
         if(err != 0)
         {
             printk("Failed to get CAN controller state : %d", err);
@@ -244,21 +245,46 @@ int main(void)
 
     int ret;
 
-    if(!device_is_ready(can_dev))
+    if(!device_is_ready(fdcan1))
     {
-        printk("CAN: device %s not ready. \n", can_dev->name);
+        printk("CAN: device %s not ready. \n", fdcan1->name);
         return 0;
     }
 
-    #ifdef CONFIG_LOOPBACK_MODE
-        ret = can_set_mode(can_dev, CAN_MODE_LOOPBACK);
+    if(!device_is_ready(fdcan2))
+    {
+        printk("CAN: device %s not ready. \n", fdcan2->name);
+        return 0;
+    }
+
+    #if CONFIG_LOOPBACK_MODE == 1
+        ret = can_set_mode(fdcan1, CAN_MODE_LOOPBACK);
+        if(ret != 0)
+        {
+            printk("ERROR setting CAN mode %d", ret);
+        }
+
+        ret = can_set_mode(fdcan2, CAN_MODE_LOOPBACK);
+        if(ret != 0)
+        {
+            printk("ERROR setting CAN mode %d", ret);
+        }
+    #else
+        ret = can_set_mode(fdcan1, CAN_MODE_NORMAL);
+        if(ret != 0)
+        {
+            printk("ERROR setting CAN mode %d", ret);
+        }
+
+        ret = can_set_mode(fdcan2, CAN_MODE_NORMAL);
         if(ret != 0)
         {
             printk("ERROR setting CAN mode %d", ret);
         }
     #endif
 
-    ret = can_start(can_dev);
+    ret = can_start(fdcan1);
+    ret = can_start(fdcan2);
 
     if(ret != 0)
     {
@@ -286,7 +312,7 @@ int main(void)
     k_work_init(&state_change_work, state_change_work_handler);
     k_work_poll_init(&change_led_work, change_led_work_handler);
 
-    ret = can_add_rx_filter_msgq(can_dev, &change_led_msgq, &change_led_filter);
+    ret = can_add_rx_filter_msgq(fdcan1, &change_led_msgq, &change_led_filter);
 
     if(ret == -ENOSPC){
         printk("Erro, no filter available! \n");
@@ -325,13 +351,13 @@ int main(void)
         printk("Error spawning poll state thread");
     }
 
-    can_set_state_change_callback(can_dev, state_change_callback, &state_change_work);
+    can_set_state_change_callback(fdcan1, state_change_callback, &state_change_work);
 
     while(1)
     {
         change_led_frame.data[0] = toggle++ & 0x01 ? SET_LED : RESET_LED;
 
-        can_send(can_dev, &change_led_frame, K_FOREVER,
+        can_send(fdcan2, &change_led_frame, K_FOREVER,
                 tx_irq_callback,
                 "LED change");
 
@@ -342,7 +368,7 @@ int main(void)
 
         counter++;
 
-        can_send(can_dev, &counter_frame, K_MSEC(100), NULL, NULL);
+        can_send(fdcan1, &counter_frame, K_MSEC(100), NULL, NULL);
         k_sleep(SLEEP_TIME);
     }
 
