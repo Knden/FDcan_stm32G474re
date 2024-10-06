@@ -217,6 +217,16 @@ int main(void)
 {
     console_init();
 
+    uint8_t toggle = 1; /* for togling the led */
+    uint16_t counter = 0; /* sending an incremental counter */
+
+    /* used to store data about thread */
+    k_tid_t rx_tid, get_state_tid;
+
+    int ret;
+
+    struct can_timing timing; /* for storing data about CAN's bit timing*/
+
     const struct can_filter change_led_filter =
     {
         .flags = 0U,
@@ -237,14 +247,6 @@ int main(void)
         .dlc = 2
     };
 
-    uint8_t toggle = 1;
-    uint16_t counter = 0;
-
-    /* used to store data about thread */
-    k_tid_t rx_tid, get_state_tid;
-
-    int ret;
-
     if(!device_is_ready(fdcan1))
     {
         printk("CAN: device %s not ready. \n", fdcan1->name);
@@ -257,7 +259,54 @@ int main(void)
         return 0;
     }
 
-    #if CONFIG_LOOPBACK_MODE == 1
+    /** Compute the CAN bit timing to have a 1Mbits/s
+     * bitrate, with a 87.5% sampling point.
+     */
+    ret = can_calc_timing(fdcan1, &timing, 1000000, 875);
+
+    if (ret > 0)
+    {
+        printk("Sample-Point error: %d", ret);
+        return 0;
+    }
+
+    if (ret < 0)
+    {
+        printk("Failed to calc a valid timing");
+        return 0;
+    }
+
+    ret = can_set_timing(fdcan1, &timing);
+    if (ret != 0)
+    {
+        printk("Failed to set timing"); return 0; }
+
+    /** Compute the CAN bit timing to have a 1Mbits/s
+     * bitrate with a 87.5% sampling point.
+     */
+    ret = can_calc_timing(fdcan2, &timing, 1000000, 875);
+
+    if (ret > 0)
+    {
+        printk("Sample-Point error: %d", ret);
+        return 0;
+    }
+
+    if (ret < 0)
+    {
+        printk("Failed to calc a valid timing");
+        return 0;
+    }
+
+    ret = can_set_timing(fdcan2, &timing);
+
+    if (ret != 0)
+    {
+        printk("Failed to set timing");
+        return 0;
+    }
+
+#if CONFIG_LOOPBACK_MODE == 1
         ret = can_set_mode(fdcan1, CAN_MODE_LOOPBACK);
         if(ret != 0)
         {
