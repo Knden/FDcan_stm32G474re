@@ -1,0 +1,16 @@
+
+&pinctrl{
+    fdcan2_rx_pb12: fdcan2_rx_pb12 {
+        pinmux = <STM32_PINMUX('B', 12, AF9)>;
+    };
+    fdcan2_tx_pb13: fdcan2_tx_pb13 {
+        pinmux = <STM32_PINMUX('B', 13, AF9)>;
+    };
+};
+
+
+&fdcan2{
+    status = "okay";
+    pinctrl-0 = < &fdcan2_rx_pb12 &fdcan2_tx_pb13 >;
+    pinctrl-names = "default";
+};
