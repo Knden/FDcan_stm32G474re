@@ -173,13 +173,13 @@
 </node>
 </node>
 <node TEXT="void state_change_callback(const struct device* dev, enum can_state state, struct can_bus_err_cnt err_cnt, void* user_data)" FOLDED="true" ID="ID_86180214" CREATED="1728126697677" MODIFIED="1728126709544">
-<node TEXT="    struct k_work* work = (struct k_work*) user_data;&#xa;    k_work_submit(work);" ID="ID_537382250" CREATED="1728126714016" MODIFIED="1728126728131">
+<node TEXT="    struct k_work* work = (struct k_work*) user_data;&#xa;    k_work_submit(work);" FOLDED="true" ID="ID_537382250" CREATED="1728126714016" MODIFIED="1728126728131">
 <node TEXT="void* user_data:&#xa;&#xa;    Purpose: This is a generic pointer to user-supplied data, passed when the callback was registered.&#xa;    Explanation: In many systems, you can associate a callback with some custom data when you register the callback. This allows you to pass context-specific data to the callback without using global variables.&#xa;    In this function, user_data is typically cast to a specific type (e.g., a pointer to a work structure like struct k_work*), which can then be used to perform additional tasks when the state change occurs." ID="ID_1040901218" CREATED="1728126901560" MODIFIED="1728126903721"/>
 <node TEXT="struct k_work* work = (struct k_work*) user_data;&#xa;&#xa;    Purpose: This line retrieves a k_work structure from the user_data pointer.&#xa;&#xa;    Explanation:&#xa;        struct k_work* work: This defines a pointer to a k_work structure, which represents a &quot;work item&quot; in Zephyr. A work item is a deferred task that can be scheduled to run later in a system.&#xa;        (struct k_work*) user_data: This casts the user_data (which is a void*, a generic pointer) to a specific pointer type, i.e., struct k_work*. The user_data is commonly passed to callbacks or interrupt service routines (ISRs) and can contain any data needed by the callback, such as a work item in this case." ID="ID_1811728800" CREATED="1728126917674" MODIFIED="1728126983328" LINK="https://docs.zephyrproject.org/latest/kernel/services/threads/workqueue.html"/>
 <node TEXT="k_work_submit(work);&#xa;&#xa;    Purpose: This submits the work item (work) to the work queue so that it can be executed later by a different thread.&#xa;&#xa;    Explanation:&#xa;        k_work_submit() is a Zephyr kernel API function that schedules (submits) the work to be executed. This function adds the work item to the system&apos;s work queue.&#xa;        Once submitted, the work handler associated with the work item will be executed at some point in the future, depending on the system&apos;s scheduling policies.&#xa;        The work item can represent any task, such as processing incoming data, updating the state of a device, or handling deferred interrupts." ID="ID_975648502" CREATED="1728127039523" MODIFIED="1728127040592"/>
 </node>
 </node>
-<node TEXT="main" ID="ID_62274524" CREATED="1728127096850" MODIFIED="1728127098597">
+<node TEXT="main" FOLDED="true" ID="ID_62274524" CREATED="1728127096850" MODIFIED="1728127098597">
 <node TEXT="can_set_state_change_callback(can_dev, state_change_callback, &amp;state_change_work);" FOLDED="true" ID="ID_1997731054" CREATED="1728133017498" MODIFIED="1728133623933">
 <node TEXT="1. can_set_state_change_callback:&#xa;&#xa;This is a function provided by the Zephyr CAN driver that allows you to register a callback function. The callback will be triggered when the state of the CAN controller changes (such as entering error states or recovering from them).&#xa;&#xa;    The purpose of this function is to allow your program to react to changes in the CAN controller&apos;s state. For example, if the CAN controller experiences too many errors and enters a &quot;bus-off&quot; state (disabling transmission), the callback will be called, and you can respond accordingly (e.g., log the error, attempt recovery)." ID="ID_1689186670" CREATED="1728133525459" MODIFIED="1728133527221"/>
 <node TEXT="The callback must have the following parameters :&#xa;&#xa;void state_change_callback(const struct device* dev, enum can_state state, struct can_bus_err_cnt err_cnt, void* user_data)&#xa;&#xa;here user_data is a kwork to submit and add it to the work queu system." ID="ID_1169230845" CREATED="1728133587075" MODIFIED="1728133679420" HGAP_QUANTITY="16.25 pt" VSHIFT_QUANTITY="37.5 pt"/>
@@ -188,16 +188,16 @@
 </node>
 </node>
 </node>
-<node TEXT="Note for myself" POSITION="right" ID="ID_1820779258" CREATED="1728137975585" MODIFIED="1728137984483">
+<node TEXT="Note for myself" FOLDED="true" POSITION="right" ID="ID_1820779258" CREATED="1728137975585" MODIFIED="1728137984483">
 <edge COLOR="#ff00ff"/>
-<node TEXT="CAN BAUDRATE" ID="ID_988407912" CREATED="1728137984929" MODIFIED="1728137995308">
+<node TEXT="CAN BAUDRATE" FOLDED="true" ID="ID_988407912" CREATED="1728137984929" MODIFIED="1728137995308">
 <node TEXT="The initial baudrate can be determined by CONFIG_CAN_DEFAULT_BITRATE" ID="ID_418363526" CREATED="1728137995517" MODIFIED="1728138023866"/>
-<node TEXT="To change the baudrate, we need to check zephyr documentation" ID="ID_1530007611" CREATED="1728138027156" MODIFIED="1728138078206" LINK="https://docs.zephyrproject.org/2.7.5/reference/networking/can_api.html#setting-the-bitrate">
+<node TEXT="To change the baudrate, we need to check zephyr documentation" FOLDED="true" ID="ID_1530007611" CREATED="1728138027156" MODIFIED="1728138078206" LINK="https://docs.zephyrproject.org/2.7.5/reference/networking/can_api.html#setting-the-bitrate">
 <node TEXT="can_calc_timing(const struct device *dev, struct can_timing *res, uint32_t bitrate, uint16_t sample_pnt)¶" FOLDED="true" ID="ID_1847938256" CREATED="1728204379102" MODIFIED="1728204413243" LINK="https://docs.zephyrproject.org/2.7.5/reference/networking/can_api.html#c.can_calc_timing">
 <node TEXT="This function is for computing bit timing" ID="ID_12871997" CREATED="1728204495028" MODIFIED="1728204515786"/>
 <node TEXT="The sampling point is where CAN senses the signal and decides if the value is dominant (0) or recessive (1)." ID="ID_42464559" CREATED="1728204415074" MODIFIED="1728204488060" LINK="https://e2e.ti.com/support/microcontrollers/c2000-microcontrollers-group/c2000/f/c2000-microcontrollers-forum/982317/tms320f280049-the-difference-between-two-sets-of-can-bit-timing-configurations"/>
 </node>
-<node TEXT="can_set_timing(const struct device *dev, const struct can_timing *timing, const struct can_timing *timing_data)¶" ID="ID_1453536119" CREATED="1728204550536" MODIFIED="1728204564963" LINK="https://docs.zephyrproject.org/2.7.5/reference/networking/can_api.html#c.can_set_timing">
+<node TEXT="can_set_timing(const struct device *dev, const struct can_timing *timing, const struct can_timing *timing_data)¶" FOLDED="true" ID="ID_1453536119" CREATED="1728204550536" MODIFIED="1728204564963" LINK="https://docs.zephyrproject.org/2.7.5/reference/networking/can_api.html#c.can_set_timing">
 <node TEXT="Cette fonction est pour appliqué le bit timing calculé" ID="ID_1240410549" CREATED="1728204565192" MODIFIED="1728204582996"/>
 </node>
 </node>
