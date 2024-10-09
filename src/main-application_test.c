@@ -8,7 +8,6 @@
 /* Function prototypes */
 void Error_Handler(void);
 static void GPIO_init(void);
-static void goto_application(void);
 
 /* Define prototype for printf usage with UART */
 #ifdef __GNUC__
@@ -21,7 +20,7 @@ static void goto_application(void);
 extern UART_HandleTypeDef hlpuart1;
 
 /* For displaying the version of the bootloader */
-static const uint8_t BL_Version[2] = {MAJOR, MINOR};
+const uint8_t APP_Version[2] = { MAJOR, MINOR };
 
 /* Main function */
 int main(void)
@@ -38,17 +37,15 @@ int main(void)
     /* Initialize the gpio */
     GPIO_init();
 
-    /* Turn ON the yellow LED */
-    HAL_GPIO_WritePin(YLED_GPIO_Port, YLED_Pin, GPIO_PIN_SET);
-
-    printf("Starting Bootloader(%d.%d)\n", BL_Version[0], BL_Version[1] );
-    HAL_Delay(2000);   //2sec delay for nothing
-
-    // Jump to application
-    goto_application();
+    printf("Starting Application(%d.%d)\n", APP_Version[0], APP_Version[1] );
 
     while (1)
     {
+    /* Blinking a led */
+    HAL_GPIO_WritePin(RLED_GPIO_Port, RLED_Pin, GPIO_PIN_SET);
+    HAL_Delay(1000);
+    HAL_GPIO_WritePin(RLED_GPIO_Port, RLED_Pin, GPIO_PIN_RESET);
+    HAL_Delay(1000);
     }
     return 0;
 }
@@ -86,28 +83,6 @@ static void GPIO_init(void)
 
     HAL_GPIO_Init(YLED_GPIO_Port, &GPIO_LED_YELLOW);
     HAL_GPIO_Init(RLED_GPIO_Port, &GPIO_LED_RED);
-}
-
-static void goto_application(void)
-{
-    printf("Gonna Jump to Application\n");
-
-    void (*app_reset_handler)(void) = (void *)(*((volatile uint32_t *)(0x08008000 + 4U)));
-
-    // Turn OFF the Green Led to tell the user that Bootloader is not running
-    HAL_GPIO_WritePin(YLED_GPIO_Port, YLED_Pin, GPIO_PIN_RESET); // Green LED OFF
-
-    /* Reset the Clock */
-    HAL_RCC_DeInit();
-    HAL_DeInit();
-    __set_MSP(*(volatile uint32_t *)0x08008000);
-
-    SysTick->CTRL = 0;
-    SysTick->LOAD = 0;
-    SysTick->VAL = 0;
-
-    /* Jump to application */
-    app_reset_handler(); // call the app reset handler
 }
 
 /* Redefinition of putchar for UART usage (necessary for printf) */
